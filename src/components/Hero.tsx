@@ -46,7 +46,7 @@ export const Hero: React.FC<HeroProps> = ({ onOpenResume }) => {
           <div className="space-y-6 lg:col-span-7">
             <div className="flex flex-wrap items-center gap-2 text-xs font-medium text-orange-400 sm:text-sm">
               <span className="inline-block h-2 w-2 animate-pulse rounded-full bg-orange-500" />
-              <span>Associate Application Development Officer</span>
+              <span>Software Developer</span>
               <span className="text-zinc-600">·</span>
               <span className="text-zinc-300">Siinqee Bank S.C.</span>
               <span className="text-zinc-600">·</span>
@@ -187,7 +187,7 @@ export const Hero: React.FC<HeroProps> = ({ onOpenResume }) => {
                     {PERSONAL_INFO.name}
                   </p>
                   <p className="text-xs font-medium text-orange-400">
-                    Associate Application Development Officer
+                    Software Developer
                   </p>
                 </div>
               </div>
