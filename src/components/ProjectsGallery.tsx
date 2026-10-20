@@ -1,5 +1,4 @@
-
-import React, { useState, useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   Search,
   ListFilter,
@@ -7,189 +6,409 @@ import {
   Award,
   SlidersHorizontal,
   Sparkles,
+  Grid2X2,
+  List,
+  X,
+  ImageOff,
 } from 'lucide-react';
 
-import { PROJECTS, Project } from '../data/portfolioData';
-import { ProjectModal } from './ProjectModal';
+import { PROJECTS } from '../data/portfolioData';
+import type { Project } from '../data/portfolioData';
 import { getImageUrl } from '../utils/imageUtils';
+import ProjectModal from './ProjectModal';
 
-export const ProjectsGallery: React.FC = () => {
-  const [selectedCategory, setSelectedCategory] = useState<string>('All Works');
-  const [searchQuery, setSearchQuery] = useState<string>('');
+type ViewMode = 'grid' | 'list';
+
+const CATEGORIES = [
+  'All',
+  'Enterprise Systems',
+  'Web Applications',
+  'Mobile Applications',
+  'Mini Apps & SuperApp',
+  'Other',
+] as const;
+
+const ProjectsGallery: React.FC = () => {
+  const [searchQuery, setSearchQuery] = useState('');
+  const [activeCategory, setActiveCategory] =
+    useState<(typeof CATEGORIES)[number]>('All');
+  const [viewMode, setViewMode] = useState<ViewMode>('grid');
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
-  const [viewMode, setViewMode] = useState<'bento' | 'compact'>('bento');
-
-  const categories = [
-    'All Works',
-    'Enterprise Banking',
-    'HR & Workforce',
-    'Fintech & Payments',
-    'Workflow & Legal',
-    'Live Web Apps',
-  ];
+  const [featuredOnly, setFeaturedOnly] = useState(false);
+  const [imageErrors, setImageErrors] = useState<Record<string, boolean>>({});
 
   const filteredProjects = useMemo(() => {
-    const query = searchQuery.toLowerCase().trim();
+    const query = searchQuery.trim().toLowerCase();
 
     return PROJECTS.filter((project) => {
-      const categoryMatch =
-        selectedCategory === 'All Works' ||
-        project.category === selectedCategory;
+      const matchesCategory =
+        activeCategory === 'All' || project.category === activeCategory;
 
-      if (!categoryMatch) return false;
-      if (!query) return true;
+      const searchableText = [
+        project.title,
+        project.description,
+        project.category,
+        ...(project.technologies ?? []),
+        ...(project.features ?? []),
+      ]
+        .filter(Boolean)
+        .join(' ')
+        .toLowerCase();
 
-      const titleMatch = project.title.toLowerCase().includes(query);
-      const subtitleMatch = project.subtitle.toLowerCase().includes(query);
-      const summaryMatch = project.summary.toLowerCase().includes(query);
+      const matchesSearch = !query || searchableText.includes(query);
+      const matchesFeatured = !featuredOnly || Boolean(project.featured);
 
-      const techMatch = project.techStack.some((technology) =>
-        technology.toLowerCase().includes(query)
-      );
-
-      const moduleMatch = project.modules.some((module) =>
-        module.toLowerCase().includes(query)
-      );
-
-      return (
-        titleMatch ||
-        subtitleMatch ||
-        summaryMatch ||
-        techMatch ||
-        moduleMatch
-      );
+      return matchesCategory && matchesSearch && matchesFeatured;
     });
-  }, [selectedCategory, searchQuery]);
+  }, [searchQuery, activeCategory, featuredOnly]);
 
-  /**
-   * Resolve local image paths for Vite production builds.
-   * Supports existing paths saved in portfolioData or localStorage.
-   */
-  const resolveProjectImage = (imagePath?: string | null): string => {
-    return getImageUrl(imagePath);
+  const clearFilters = () => {
+    setSearchQuery('');
+    setActiveCategory('All');
+    setFeaturedOnly(false);
   };
 
-  const handleImageError = (
-    event: React.SyntheticEvent<HTMLImageElement>
-  ) => {
-    const image = event.currentTarget;
-    image.style.display = 'none';
+  const handleImageError = (projectId: string) => {
+    setImageErrors((previous) => ({
+      ...previous,
+      [projectId]: true,
+    }));
+  };
 
-    const container = image.parentElement;
-
-    if (container) {
-      container.classList.add(
-        'flex',
-        'items-center',
-        'justify-center',
-        'bg-zinc-800'
-      );
-
-      // Display a fallback message if the image cannot be resolved.
-      if (!container.querySelector('[data-image-fallback]')) {
-        const fallback = document.createElement('div');
-
-        fallback.dataset.imageFallback = 'true';
-        fallback.className =
-          'absolute inset-0 flex items-center justify-center p-4 text-center text-xs text-zinc-400';
-
-        fallback.textContent = 'Project preview unavailable';
-
-        container.appendChild(fallback);
-      }
+  const getStatusClass = (status?: string) => {
+    switch (status) {
+      case 'Live Web':
+        return 'bg-emerald-100 text-emerald-800 ring-emerald-200';
+      case 'Enterprise Deployed':
+        return 'bg-blue-100 text-blue-800 ring-blue-200';
+      case 'Adopted by Faculty':
+        return 'bg-violet-100 text-violet-800 ring-violet-200';
+      case 'In Production':
+        return 'bg-amber-100 text-amber-900 ring-amber-200';
+      default:
+        return 'bg-gray-100 text-gray-700 ring-gray-200';
     }
   };
 
-  return (
-    <section
-      id="gallery"
-      className="border-t border-zinc-800 py-16 sm:py-24"
+  const renderProjectImage = (
+    project: Project,
+    className: string,
+  ) => {
+    const imageUrl = getImageUrl(project.image);
+    const hasError = imageErrors[project.id] || !imageUrl;
+
+    return (
+      <div className={`relative overflow-hidden ${className}`}>
+        {!hasError ? (
+          <img
+            src={imageUrl}
+            alt={`${project.title} project preview`}
+            loading="lazy"
+            onError={() => handleImageError(project.id)}
+            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+          />
+        ) : (
+          <div className="flex h-full min-h-40 w-full flex-col items-center justify-center gap-3 bg-gradient-to-br from-gray-100 to-gray-200 text-gray-400">
+            <ImageOff size={34} strokeWidth={1.5} />
+            <span className="px-4 text-center text-xs">
+              Project preview unavailable
+            </span>
+          </div>
+        )}
+
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-70" />
+
+        {project.featured && (
+          <div className="absolute left-3 top-3 inline-flex items-center gap-1.5 rounded-full bg-white/95 px-3 py-1.5 text-xs font-semibold text-gray-800 shadow-sm backdrop-blur">
+            <Sparkles size={13} className="text-amber-500" />
+            Featured
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  const renderTechnologyBadges = (
+    technologies: string[] | undefined,
+    compact = false,
+  ) => {
+    const items = technologies ?? [];
+    const visibleItems = compact ? items.slice(0, 3) : items.slice(0, 5);
+    const remaining = items.length - visibleItems.length;
+
+    return (
+      <div className="flex flex-wrap gap-2">
+        {visibleItems.map((technology) => (
+          <span
+            key={technology}
+            className="rounded-md border border-gray-200 bg-gray-50 px-2 py-1 text-xs font-medium text-gray-600"
+          >
+            {technology}
+          </span>
+        ))}
+
+        {remaining > 0 && (
+          <span className="rounded-md bg-gray-100 px-2 py-1 text-xs font-medium text-gray-500">
+            +{remaining}
+          </span>
+        )}
+      </div>
+    );
+  };
+
+  const renderGridCard = (project: Project) => (
+    <article
+      key={project.id}
+      className="group flex h-full cursor-pointer flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white transition-all duration-300 hover:-translate-y-1 hover:border-[#6c8939]/40 hover:shadow-xl"
+      onClick={() => setSelectedProject(project)}
+      onKeyDown={(event) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          setSelectedProject(project);
+        }
+      }}
+      role="button"
+      tabIndex={0}
+      aria-label={`View ${project.title} project details`}
     >
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        {/* Section Header */}
-        <div className="mb-10 flex flex-col justify-between gap-6 md:flex-row md:items-end">
-          <div>
-            <div className="mb-2 text-xs font-semibold uppercase tracking-wider text-orange-400">
-              Curated Portfolio &amp; Systems Architecture
-            </div>
+      {renderProjectImage(project, 'aspect-[16/10] w-full bg-gray-100')}
 
-            <h2 className="font-display text-3xl font-bold tracking-tight text-white [text-wrap:balance] sm:text-4xl">
-              Enterprise Design, Mini Apps &amp; Systems Gallery
-            </h2>
+      <div className="flex flex-1 flex-col p-5">
+        <div className="mb-3 flex flex-wrap items-center gap-2">
+          <span className="rounded-full bg-[#6c8939]/10 px-3 py-1 text-xs font-semibold text-[#526b2a]">
+            {project.category}
+          </span>
 
-            <p className="mt-2 max-w-2xl text-sm text-zinc-400 sm:text-base">
-              Production-tested banking solutions, Huawei Mobile Wallet Mini
-              Apps, human capital platforms, automated legal workflows, and
-              live web portals.
-            </p>
-          </div>
-
-          {/* View Mode Toggle */}
-          <div className="flex items-center gap-1 self-start rounded-lg border border-zinc-800 bg-[#161920] p-1 md:self-auto">
-            <button
-              type="button"
-              onClick={() => setViewMode('bento')}
-              className={`flex cursor-pointer items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
-                viewMode === 'bento'
-                  ? 'bg-orange-600 font-semibold text-white shadow-sm'
-                  : 'text-zinc-400 hover:text-white'
-              }`}
+          {project.status && (
+            <span
+              className={`rounded-full px-3 py-1 text-xs font-medium ring-1 ring-inset ${getStatusClass(
+                project.status,
+              )}`}
             >
-              <span>Project Cards</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setViewMode('compact')}
-              className={`flex cursor-pointer items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
-                viewMode === 'compact'
-                  ? 'bg-orange-600 font-semibold text-white shadow-sm'
-                  : 'text-zinc-400 hover:text-white'
-              }`}
-            >
-              <ListFilter className="h-3.5 w-3.5" />
-              <span>System Table</span>
-            </button>
-          </div>
+              {project.status}
+            </span>
+          )}
         </div>
 
-        {/* Mini Apps Experience Callout */}
-        <div className="mb-8 flex flex-col items-start justify-between gap-4 rounded-2xl border border-orange-500/30 bg-[#161920] p-5 md:flex-row md:items-center">
-          <div className="flex items-start gap-3.5">
-            <div className="mt-0.5 shrink-0 rounded-xl border border-orange-500/20 bg-orange-500/10 p-2.5 text-orange-400">
-              <Sparkles className="h-5 w-5" />
-            </div>
+        <div className="mb-2 flex items-start justify-between gap-3">
+          <h3 className="text-lg font-bold leading-snug text-gray-900 transition-colors group-hover:text-[#526b2a]">
+            {project.title}
+          </h3>
 
-            <div>
-              <h3 className="text-sm font-bold text-white">
-                Enterprise Systems &amp; Application Engineering
-              </h3>
-
-              <p className="mt-1 max-w-3xl text-xs leading-relaxed text-zinc-400">
-                Explore banking systems, workforce platforms, payment
-                integrations, legal workflows, and production-oriented web
-                applications.
-              </p>
-            </div>
-          </div>
+          <ArrowUpRight
+            size={19}
+            className="mt-0.5 shrink-0 text-gray-400 transition-all group-hover:-translate-y-1 group-hover:translate-x-1 group-hover:text-[#6c8939]"
+          />
         </div>
 
-        {/* Filter Controls & Search */}
-        <div className="mb-8 flex flex-col items-stretch justify-between gap-4 lg:flex-row lg:items-center">
-          {/* Category Tabs */}
-          <div className="scrollbar-none flex items-center gap-1.5 overflow-x-auto pb-2 lg:pb-0">
-            {categories.map((category) => {
-              const isActive = selectedCategory === category;
+        <p className="mb-5 line-clamp-3 flex-1 text-sm leading-6 text-gray-600">
+          {project.description}
+        </p>
+
+        {renderTechnologyBadges(project.technologies, true)}
+
+        <div className="mt-5 flex items-center justify-between border-t border-gray-100 pt-4">
+          <span className="text-xs font-medium text-gray-500">
+            View project details
+          </span>
+          <span className="text-sm font-semibold text-[#526b2a]">
+            Explore <span aria-hidden="true">→</span>
+          </span>
+        </div>
+      </div>
+    </article>
+  );
+
+  const renderListCard = (project: Project) => (
+    <article
+      key={project.id}
+      className="group grid cursor-pointer overflow-hidden rounded-2xl border border-gray-200 bg-white transition-all hover:border-[#6c8939]/40 hover:shadow-lg md:grid-cols-[260px_1fr]"
+      onClick={() => setSelectedProject(project)}
+      onKeyDown={(event) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          setSelectedProject(project);
+        }
+      }}
+      role="button"
+      tabIndex={0}
+      aria-label={`View ${project.title} project details`}
+    >
+      {renderProjectImage(
+        project,
+        'aspect-[16/10] w-full bg-gray-100 md:aspect-auto md:min-h-56',
+      )}
+
+      <div className="flex min-w-0 flex-col p-5 md:p-6">
+        <div className="mb-3 flex flex-wrap items-center gap-2">
+          <span className="rounded-full bg-[#6c8939]/10 px-3 py-1 text-xs font-semibold text-[#526b2a]">
+            {project.category}
+          </span>
+
+          {project.status && (
+            <span
+              className={`rounded-full px-3 py-1 text-xs font-medium ring-1 ring-inset ${getStatusClass(
+                project.status,
+              )}`}
+            >
+              {project.status}
+            </span>
+          )}
+
+          {project.featured && (
+            <span className="inline-flex items-center gap-1 text-xs font-semibold text-amber-700">
+              <Sparkles size={13} />
+              Featured
+            </span>
+          )}
+        </div>
+
+        <div className="mb-2 flex items-start justify-between gap-3">
+          <h3 className="text-xl font-bold text-gray-900 transition-colors group-hover:text-[#526b2a]">
+            {project.title}
+          </h3>
+          <ArrowUpRight
+            size={20}
+            className="shrink-0 text-gray-400 transition-colors group-hover:text-[#6c8939]"
+          />
+        </div>
+
+        <p className="mb-5 line-clamp-3 text-sm leading-6 text-gray-600">
+          {project.description}
+        </p>
+
+        <div className="mt-auto">
+          {renderTechnologyBadges(project.technologies)}
+        </div>
+
+        <div className="mt-5 flex justify-end border-t border-gray-100 pt-4">
+          <span className="text-sm font-semibold text-[#526b2a]">
+            View details <span aria-hidden="true">→</span>
+          </span>
+        </div>
+      </div>
+    </article>
+  );
+
+  return (
+    <section id="projects" className="relative bg-white px-4 py-20 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-7xl">
+        {/* Section heading */}
+        <div className="mb-10 text-center">
+          <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-[#6c8939]/20 bg-[#6c8939]/10 px-4 py-2 text-sm font-semibold text-[#526b2a]">
+            <Award size={16} />
+            Selected Work
+          </div>
+
+          <h2 className="text-3xl font-extrabold tracking-tight text-gray-900 sm:text-4xl lg:text-5xl">
+            Projects & <span className="text-[#6c8939]">Solutions</span>
+          </h2>
+
+          <p className="mx-auto mt-4 max-w-2xl text-base leading-7 text-gray-600 sm:text-lg">
+            A collection of applications, enterprise systems, and digital
+            solutions I have worked on to solve real-world problems.
+          </p>
+
+          <div className="mx-auto mt-6 h-1 w-20 rounded-full bg-[#FBAF1F]" />
+        </div>
+
+        {/* Search and controls */}
+        <div className="mb-7 rounded-2xl border border-gray-200 bg-gray-50/80 p-4 sm:p-5">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <div className="relative w-full lg:max-w-md">
+              <Search
+                size={19}
+                className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
+              />
+
+              <input
+                type="search"
+                value={searchQuery}
+                onChange={(event) => setSearchQuery(event.target.value)}
+                placeholder="Search projects, technologies..."
+                aria-label="Search projects"
+                className="w-full rounded-xl border border-gray-200 bg-white py-3 pl-11 pr-10 text-sm text-gray-800 outline-none transition focus:border-[#6c8939] focus:ring-4 focus:ring-[#6c8939]/10"
+              />
+
+              {searchQuery && (
+                <button
+                  type="button"
+                  onClick={() => setSearchQuery('')}
+                  aria-label="Clear search"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 rounded-md p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-700"
+                >
+                  <X size={16} />
+                </button>
+              )}
+            </div>
+
+            <div className="flex flex-wrap items-center gap-3">
+              <button
+                type="button"
+                onClick={() => setFeaturedOnly((previous) => !previous)}
+                aria-pressed={featuredOnly}
+                className={`inline-flex items-center gap-2 rounded-xl border px-4 py-3 text-sm font-semibold transition ${
+                  featuredOnly
+                    ? 'border-[#6c8939] bg-[#6c8939] text-white'
+                    : 'border-gray-200 bg-white text-gray-700 hover:border-[#6c8939]/50'
+                }`}
+              >
+                <Sparkles size={16} />
+                Featured
+              </button>
+
+              <div className="flex items-center gap-1 rounded-xl border border-gray-200 bg-white p-1">
+                <button
+                  type="button"
+                  onClick={() => setViewMode('grid')}
+                  aria-label="Grid view"
+                  aria-pressed={viewMode === 'grid'}
+                  className={`rounded-lg p-2.5 transition ${
+                    viewMode === 'grid'
+                      ? 'bg-[#6c8939]/10 text-[#526b2a]'
+                      : 'text-gray-500 hover:bg-gray-100'
+                  }`}
+                >
+                  <Grid2X2 size={18} />
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setViewMode('list')}
+                  aria-label="List view"
+                  aria-pressed={viewMode === 'list'}
+                  className={`rounded-lg p-2.5 transition ${
+                    viewMode === 'list'
+                      ? 'bg-[#6c8939]/10 text-[#526b2a]'
+                      : 'text-gray-500 hover:bg-gray-100'
+                  }`}
+                >
+                  <List size={18} />
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Category filters */}
+          <div className="mt-5 flex flex-wrap items-center gap-2">
+            <span className="mr-1 inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-gray-500">
+              <SlidersHorizontal size={14} />
+              Category
+            </span>
+
+            {CATEGORIES.map((category) => {
+              const isActive = activeCategory === category;
 
               return (
                 <button
                   key={category}
                   type="button"
-                  onClick={() => setSelectedCategory(category)}
-                  className={`cursor-pointer whitespace-nowrap rounded-lg border px-3.5 py-1.5 text-xs font-medium transition-all ${
+                  onClick={() => setActiveCategory(category)}
+                  aria-pressed={isActive}
+                  className={`rounded-full border px-4 py-2 text-xs font-semibold transition sm:text-sm ${
                     isActive
-                      ? 'border-orange-600 bg-orange-600 font-semibold text-white shadow-sm shadow-orange-950/40'
-                      : 'border-zinc-800 bg-[#161920] text-zinc-400 hover:bg-[#1d212a] hover:text-white'
+                      ? 'border-[#6c8939] bg-[#6c8939] text-white shadow-sm'
+                      : 'border-gray-200 bg-white text-gray-600 hover:border-[#6c8939]/50 hover:text-[#526b2a]'
                   }`}
                 >
                   {category}
@@ -197,292 +416,96 @@ export const ProjectsGallery: React.FC = () => {
               );
             })}
           </div>
-
-          {/* Search Input */}
-          <div className="relative w-full lg:w-72">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-500" />
-
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(event) => setSearchQuery(event.target.value)}
-              placeholder="Search by tech, module, keyword..."
-              aria-label="Search projects"
-              className="w-full rounded-lg border border-zinc-800 bg-[#161920] py-2 pl-9 pr-14 text-xs text-zinc-200 placeholder-zinc-500 transition-colors focus:border-orange-500 focus:outline-none"
-            />
-
-            {searchQuery && (
-              <button
-                type="button"
-                onClick={() => setSearchQuery('')}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-zinc-400 hover:text-white"
-              >
-                Clear
-              </button>
-            )}
-          </div>
         </div>
 
-        {/* Project Count */}
-        <div className="mb-4 text-xs text-zinc-500">
-          Showing{' '}
-          <span className="font-semibold text-zinc-300">
-            {filteredProjects.length}
-          </span>{' '}
-          of {PROJECTS.length} projects
+        {/* Results summary */}
+        <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+          <p className="text-sm text-gray-600">
+            Showing{' '}
+            <span className="font-bold text-gray-900">
+              {filteredProjects.length}
+            </span>{' '}
+            {filteredProjects.length === 1 ? 'project' : 'projects'}
+          </p>
+
+          {(searchQuery || activeCategory !== 'All' || featuredOnly) && (
+            <button
+              type="button"
+              onClick={clearFilters}
+              className="inline-flex items-center gap-2 text-sm font-semibold text-[#526b2a] hover:text-[#6c8939]"
+            >
+              <X size={15} />
+              Clear filters
+            </button>
+          )}
         </div>
 
-        {/* Empty State */}
-        {filteredProjects.length === 0 && (
-          <div className="my-8 rounded-2xl border border-zinc-800 bg-[#161920] p-12 text-center">
-            <SlidersHorizontal className="mx-auto mb-3 h-8 w-8 text-zinc-500" />
+        {/* Projects */}
+        {filteredProjects.length > 0 ? (
+          viewMode === 'grid' ? (
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3">
+              {filteredProjects.map(renderGridCard)}
+            </div>
+          ) : (
+            <div className="flex flex-col gap-5">
+              {filteredProjects.map(renderListCard)}
+            </div>
+          )
+        ) : (
+          <div className="rounded-2xl border border-dashed border-gray-300 bg-gray-50 px-6 py-16 text-center">
+            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-gray-100 text-gray-400">
+              <ListFilter size={25} />
+            </div>
 
-            <h3 className="text-base font-semibold text-zinc-300">
-              No matching projects found
+            <h3 className="text-lg font-bold text-gray-900">
+              No projects found
             </h3>
 
-            <p className="mt-1 text-xs text-zinc-500">
-              Try adjusting your search terms or selecting another category.
+            <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-gray-500">
+              Try another search term or choose a different category to find
+              the project you are looking for.
             </p>
 
             <button
               type="button"
-              onClick={() => {
-                setSelectedCategory('All Works');
-                setSearchQuery('');
-              }}
-              className="mt-4 cursor-pointer rounded-lg bg-[#1d212a] px-4 py-2 text-xs font-semibold text-orange-400 transition-colors hover:text-orange-300"
+              onClick={clearFilters}
+              className="mt-5 rounded-xl bg-[#6c8939] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#526b2a]"
             >
-              Reset Filters
+              Reset filters
             </button>
           </div>
         )}
 
-        {/* Project Cards View */}
-        {viewMode === 'bento' && filteredProjects.length > 0 && (
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {filteredProjects.map((project, index) => {
-              const isLarge =
-                Boolean(project.featured) && (index === 0 || index === 1);
-
-              const imageUrl = resolveProjectImage(project.image);
-
-              return (
-                <article
-                  key={project.id}
-                  onClick={() => setSelectedProject(project)}
-                  onKeyDown={(event) => {
-                    if (event.key === 'Enter' || event.key === ' ') {
-                      event.preventDefault();
-                      setSelectedProject(project);
-                    }
-                  }}
-                  role="button"
-                  tabIndex={0}
-                  aria-label={`View ${project.title} case study`}
-                  className={`group relative flex cursor-pointer flex-col justify-between overflow-hidden rounded-2xl border border-zinc-800 bg-[#161920] transition-all duration-300 hover:border-orange-500/50 hover:shadow-xl hover:shadow-orange-950/20 ${
-                    isLarge
-                      ? 'md:col-span-2 lg:col-span-2'
-                      : 'col-span-1'
-                  }`}
-                >
-                  {/* Project Image */}
-                  <div
-                    className={`relative w-full overflow-hidden bg-zinc-900 ${
-                      isLarge
-                        ? 'aspect-[16/9] max-h-80'
-                        : 'aspect-[16/10]'
-                    }`}
-                  >
-                    {imageUrl ? (
-                      <img
-                        src={imageUrl}
-                        alt={`${project.title} preview`}
-                        loading="lazy"
-                        decoding="async"
-                        className="h-full w-full object-cover object-top transition-transform duration-500 group-hover:scale-105"
-                        onError={handleImageError}
-                      />
-                    ) : (
-                      <div className="absolute inset-0 flex items-center justify-center bg-zinc-800 p-4 text-center text-xs text-zinc-400">
-                        Project preview unavailable
-                      </div>
-                    )}
-
-                    {/* Contrast Gradient */}
-                    <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[#161920] via-transparent to-transparent opacity-90" />
-
-                    {/* Award Ribbon */}
-                    {project.certificateAward && (
-                      <div className="absolute left-3 top-3 flex max-w-[80%] items-center gap-1.5 rounded border border-orange-500/40 bg-orange-500/20 px-2.5 py-1 text-[11px] font-medium text-orange-300 backdrop-blur-md">
-                        <Award className="h-3.5 w-3.5 shrink-0 text-orange-400" />
-                        <span className="truncate">
-                          {project.certificateAward}
-                        </span>
-                      </div>
-                    )}
-
-                    {/* Project Status */}
-                    <div className="absolute right-3 top-3 rounded border border-emerald-500/30 bg-zinc-950/80 px-2.5 py-1 text-[11px] font-semibold text-emerald-400 backdrop-blur-md">
-                      {project.status}
-                    </div>
-                  </div>
-
-                  {/* Card Body */}
-                  <div className="flex flex-1 flex-col justify-between p-6">
-                    <div>
-                      {/* Project Metadata */}
-                      <div className="mb-2 flex flex-wrap items-center gap-1.5 text-xs font-medium text-orange-400">
-                        <span>{project.category}</span>
-                        <span className="text-zinc-600">·</span>
-                        <span className="text-zinc-300">
-                          {project.organization}
-                        </span>
-                        <span className="text-zinc-600">·</span>
-                        <span className="text-zinc-400">{project.year}</span>
-                      </div>
-
-                      <h3 className="font-display text-xl font-bold tracking-tight text-white transition-colors group-hover:text-orange-300">
-                        {project.title}
-                      </h3>
-
-                      <p className="mt-2 line-clamp-2 text-xs leading-relaxed text-zinc-300 sm:text-sm">
-                        {project.summary}
-                      </p>
-
-                      {/* Key Modules */}
-                      <div className="mt-4 border-t border-zinc-800 pt-3">
-                        <div className="mb-2 text-[11px] font-medium uppercase tracking-wider text-zinc-500">
-                          Key Modules
-                        </div>
-
-                        <ul className="grid grid-cols-1 gap-1.5 text-xs text-zinc-300 sm:grid-cols-2">
-                          {project.modules
-                            .slice(0, isLarge ? 4 : 2)
-                            .map((module, moduleIndex) => (
-                              <li
-                                key={`${project.id}-module-${moduleIndex}`}
-                                className="flex items-center gap-1.5 truncate"
-                              >
-                                <span className="font-bold text-orange-500">
-                                  ›
-                                </span>
-                                <span className="truncate">{module}</span>
-                              </li>
-                            ))}
-                        </ul>
-                      </div>
-                    </div>
-
-                    {/* Card Footer */}
-                    <div className="mt-6 flex items-center justify-between gap-3 border-t border-zinc-800 pt-4">
-                      <div className="flex flex-wrap gap-1.5 font-mono text-[11px] text-zinc-400">
-                        {project.techStack.slice(0, 3).map((technology, i) => (
-                          <span
-                            key={`${project.id}-tech-${i}`}
-                            className="rounded border border-zinc-800 bg-[#1d212a] px-2 py-0.5 text-zinc-300"
-                          >
-                            {technology}
-                          </span>
-                        ))}
-
-                        {project.techStack.length > 3 && (
-                          <span className="px-1.5 py-0.5 text-zinc-500">
-                            +{project.techStack.length - 3}
-                          </span>
-                        )}
-                      </div>
-
-                      <div className="flex shrink-0 items-center gap-1 text-xs font-semibold text-orange-400 transition-transform group-hover:translate-x-0.5">
-                        <span>Case Study</span>
-                        <ArrowUpRight className="h-3.5 w-3.5" />
-                      </div>
-                    </div>
-                  </div>
-                </article>
-              );
-            })}
+        {/* Bottom note */}
+        <div className="mt-12 flex flex-col items-center justify-between gap-4 rounded-2xl border border-[#6c8939]/15 bg-[#6c8939]/5 p-6 text-center sm:flex-row sm:text-left">
+          <div>
+            <h3 className="font-bold text-gray-900">
+              Have a project in mind?
+            </h3>
+            <p className="mt-1 text-sm text-gray-600">
+              Let&apos;s discuss how technology can help solve your problem.
+            </p>
           </div>
-        )}
 
-        {/* Compact System Table */}
-        {viewMode === 'compact' && filteredProjects.length > 0 && (
-          <div className="overflow-x-auto rounded-2xl border border-zinc-800 bg-[#161920]">
-            <table className="w-full text-left text-xs text-zinc-300">
-              <thead className="border-b border-zinc-800 bg-[#1d212a] text-[11px] font-semibold uppercase tracking-wider text-zinc-400">
-                <tr>
-                  <th className="px-4 py-3.5">Project &amp; Subtitle</th>
-                  <th className="px-4 py-3.5">Category</th>
-                  <th className="px-4 py-3.5">Organization</th>
-                  <th className="px-4 py-3.5">Tech Stack</th>
-                  <th className="px-4 py-3.5">Status</th>
-                  <th className="px-4 py-3.5 text-right">Action</th>
-                </tr>
-              </thead>
-
-              <tbody className="divide-y divide-zinc-800">
-                {filteredProjects.map((project) => (
-                  <tr
-                    key={project.id}
-                    onClick={() => setSelectedProject(project)}
-                    className="cursor-pointer transition-colors hover:bg-[#1d212a]/60"
-                  >
-                    <td className="px-4 py-4">
-                      <div className="font-display text-sm font-semibold text-white">
-                        {project.title}
-                      </div>
-
-                      <div className="mt-0.5 line-clamp-1 text-xs text-zinc-400">
-                        {project.subtitle}
-                      </div>
-                    </td>
-
-                    <td className="whitespace-nowrap px-4 py-4 font-medium text-orange-400">
-                      {project.category}
-                    </td>
-
-                    <td className="whitespace-nowrap px-4 py-4 text-zinc-300">
-                      {project.organization}
-                    </td>
-
-                    <td className="px-4 py-4">
-                      <div className="flex flex-wrap gap-1 font-mono text-[11px]">
-                        {project.techStack.slice(0, 3).join(', ')}
-                      </div>
-                    </td>
-
-                    <td className="whitespace-nowrap px-4 py-4">
-                      <span className="font-medium text-emerald-400">
-                        {project.status}
-                      </span>
-                    </td>
-
-                    <td className="whitespace-nowrap px-4 py-4 text-right">
-                      <button
-                        type="button"
-                        onClick={(event) => {
-                          event.stopPropagation();
-                          setSelectedProject(project);
-                        }}
-                        className="inline-flex items-center gap-1 text-xs font-semibold text-orange-400 hover:text-orange-300"
-                      >
-                        <span>Details</span>
-                        <ArrowUpRight className="h-3.5 w-3.5" />
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
+          <a
+            href="#contact"
+            className="inline-flex shrink-0 items-center gap-2 rounded-xl bg-[#6c8939] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#526b2a]"
+          >
+            Let&apos;s Connect
+            <ArrowUpRight size={17} />
+          </a>
+        </div>
       </div>
 
-      {/* Case Study Modal */}
-      <ProjectModal
-        project={selectedProject}
-        onClose={() => setSelectedProject(null)}
-      />
+      {/* Project details modal */}
+      {selectedProject && (
+        <ProjectModal
+          project={selectedProject}
+          onClose={() => setSelectedProject(null)}
+        />
+      )}
     </section>
   );
 };
+
+export default ProjectsGallery;
