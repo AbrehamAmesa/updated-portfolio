@@ -8,7 +8,7 @@ import { ExperienceProvider, useExperience } from './context/ExperienceContext';
 import { AdminBar } from './components/AdminBar';
 import { Navbar } from './components/Navbar';
 import { Hero } from './components/Hero';
-import ProjectsGallery from './components/ProjectsGallery';
+import {ProjectsGallery} from './components/ProjectsGallery';
 import { ExperienceTimeline } from './components/ExperienceTimeline';
 import { CredentialsSection } from './components/CredentialsSection';
 import { ContactSection } from './components/ContactSection';
