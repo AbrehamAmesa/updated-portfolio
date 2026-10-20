@@ -1,5 +1,13 @@
+
 import React from 'react';
-import { Shield, Eye, Edit3, Plus, Share2, LogOut, Settings } from 'lucide-react';
+import {
+  Shield,
+  Eye,
+  Edit3,
+  Plus,
+  Share2,
+  LogOut,
+} from 'lucide-react';
 import { useExperience } from '../context/ExperienceContext';
 
 interface AdminBarProps {
@@ -8,103 +16,113 @@ interface AdminBarProps {
   onNavigateAdmin: () => void;
 }
 
-export const AdminBar: React.FC<AdminBarProps> = ({ onOpenAddModal, onOpenShareModal, onNavigateAdmin }) => {
+export const AdminBar: React.FC<AdminBarProps> = ({
+  onOpenAddModal,
+  onOpenShareModal,
+}) => {
   const { isAdmin, viewMode, setViewMode, logoutAdmin } = useExperience();
 
   if (!isAdmin) return null;
 
   return (
-    <div className="sticky top-0 z-50 w-full bg-[#12141a]/95 border-b border-orange-500/30 backdrop-blur-md text-xs py-2 px-4 shadow-xl">
-      <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3">
-        
-        {/* Left: Admin Status & Identity */}
+    <div className="sticky top-0 z-50 w-full border-b border-orange-500/30 bg-[#12141a]/95 px-4 py-2 text-xs text-white shadow-xl backdrop-blur-md">
+      <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3">
+        {/* Admin Status and Identity */}
         <div className="flex items-center gap-2.5">
-          <div className="flex items-center gap-1.5 px-2 py-0.5 rounded bg-orange-500/20 text-orange-400 font-semibold border border-orange-500/30">
-            <Shield className="w-3.5 h-3.5 text-orange-400" />
+          <div className="flex items-center gap-1.5 rounded border border-orange-500/30 bg-orange-500/20 px-2 py-0.5 font-semibold text-orange-400">
+            <Shield className="h-3.5 w-3.5" />
             <span>Admin Active</span>
           </div>
-          <span className="hidden sm:inline text-zinc-600">|</span>
-          <span className="hidden sm:inline text-zinc-300">
-            Logged in as <strong className="text-white">Abreham Amesa</strong>
+
+          <span className="hidden text-zinc-600 sm:inline">|</span>
+
+          <span className="hidden text-zinc-300 sm:inline">
+            Logged in as{' '}
+            <strong className="text-white">Abreham Amesa</strong>
           </span>
         </div>
 
-        {/* Center: Mode Switcher */}
-        <div className="flex items-center bg-[#181b22] border border-zinc-800 p-0.5 rounded-lg">
+        {/* Mode Switcher */}
+        <div className="flex items-center rounded-lg border border-zinc-800 bg-[#181b22] p-0.5">
           <button
+            type="button"
             onClick={() => setViewMode('admin')}
-            className={`flex items-center gap-1.5 px-3 py-1 rounded-md font-medium transition-all cursor-pointer ${
+            aria-pressed={viewMode === 'admin'}
+            className={`flex cursor-pointer items-center gap-1.5 rounded-md px-3 py-1 font-medium transition-all ${
               viewMode === 'admin'
-                ? 'bg-orange-600 text-white font-bold shadow-sm'
+                ? 'bg-orange-600 font-bold text-white shadow-sm'
                 : 'text-zinc-400 hover:text-white'
             }`}
           >
-            <Edit3 className="w-3.5 h-3.5" />
+            <Edit3 className="h-3.5 w-3.5" />
             <span>Edit Mode</span>
           </button>
 
           <button
+            type="button"
             onClick={() => setViewMode('public-preview')}
-            className={`flex items-center gap-1.5 px-3 py-1 rounded-md font-medium transition-all cursor-pointer ${
+            aria-pressed={viewMode === 'public-preview'}
+            className={`flex cursor-pointer items-center gap-1.5 rounded-md px-3 py-1 font-medium transition-all ${
               viewMode === 'public-preview'
-                ? 'bg-amber-400 text-zinc-950 font-bold shadow-sm'
+                ? 'bg-amber-400 font-bold text-zinc-950 shadow-sm'
                 : 'text-zinc-400 hover:text-white'
             }`}
           >
-            <Eye className="w-3.5 h-3.5" />
+            <Eye className="h-3.5 w-3.5" />
             <span>Public Preview</span>
           </button>
         </div>
 
-        {/* Right: Actions */}
+        {/* Actions */}
         <div className="flex items-center gap-2">
-          <button
-            onClick={onNavigateAdmin}
-            className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-[#1e222b] hover:bg-[#282d39] text-orange-300 border border-orange-500/30 rounded-md transition-colors cursor-pointer"
-            title="Open Full Admin Dashboard (/admin)"
-          >
-            <Settings className="w-3.5 h-3.5 text-orange-400" />
-            <span>Admin Dashboard (/admin)</span>
-          </button>
-
           {viewMode === 'admin' && (
             <button
+              type="button"
               onClick={onOpenAddModal}
-              className="inline-flex items-center gap-1.5 px-3 py-1 bg-orange-600 hover:bg-orange-500 text-white font-bold rounded-md transition-colors cursor-pointer"
+              className="inline-flex cursor-pointer items-center gap-1.5 rounded-md bg-orange-600 px-3 py-1 font-bold text-white transition-colors hover:bg-orange-500"
+              title="Add a new work experience"
             >
-              <Plus className="w-3.5 h-3.5" />
+              <Plus className="h-3.5 w-3.5" />
               <span>Add Experience</span>
             </button>
           )}
 
           <button
+            type="button"
             onClick={onOpenShareModal}
-            className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-[#1e222b] hover:bg-[#282d39] text-zinc-200 border border-zinc-700 rounded-md transition-colors cursor-pointer"
-            title="Share Public Link without Edit controls"
+            className="inline-flex cursor-pointer items-center gap-1.5 rounded-md border border-zinc-700 bg-[#1e222b] px-2.5 py-1 text-zinc-200 transition-colors hover:bg-[#282d39]"
+            title="Share public link without edit controls"
           >
-            <Share2 className="w-3.5 h-3.5 text-orange-400" />
+            <Share2 className="h-3.5 w-3.5 text-orange-400" />
             <span className="hidden sm:inline">Share Public Link</span>
           </button>
 
           <button
+            type="button"
             onClick={logoutAdmin}
-            className="p-1 text-zinc-400 hover:text-rose-400 hover:bg-[#1e222b] rounded transition-colors cursor-pointer"
+            className="cursor-pointer rounded p-1 text-zinc-400 transition-colors hover:bg-[#1e222b] hover:text-rose-400"
             title="Exit Admin Mode"
+            aria-label="Exit Admin Mode"
           >
-            <LogOut className="w-4 h-4" />
+            <LogOut className="h-4 w-4" />
           </button>
         </div>
-
       </div>
 
-      {/* Notice if in Preview Mode */}
+      {/* Public Preview Notice */}
       {viewMode === 'public-preview' && (
-        <div className="mt-1 pt-1 border-t border-zinc-800 text-[11px] text-amber-300/90 text-center flex items-center justify-center gap-2">
-          <Eye className="w-3.5 h-3.5 text-amber-400" />
-          <span>You are previewing how other visitors and recruiters see your portfolio. Edit tools are hidden.</span>
+        <div className="mt-1 flex flex-wrap items-center justify-center gap-2 border-t border-zinc-800 pt-2 text-center text-[11px] text-amber-300/90">
+          <Eye className="h-3.5 w-3.5 shrink-0 text-amber-400" />
+
+          <span>
+            You are previewing how other visitors and recruiters see your
+            portfolio. Edit tools are hidden.
+          </span>
+
           <button
+            type="button"
             onClick={() => setViewMode('admin')}
-            className="underline font-semibold hover:text-white ml-1 cursor-pointer"
+            className="ml-1 cursor-pointer font-semibold underline hover:text-white"
           >
             Switch back to Edit Mode
           </button>
@@ -113,3 +131,5 @@ export const AdminBar: React.FC<AdminBarProps> = ({ onOpenAddModal, onOpenShareM
     </div>
   );
 };
+
+export default AdminBar;

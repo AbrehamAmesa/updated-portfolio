@@ -1,3 +1,4 @@
+
 import React, { useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import {
@@ -5,7 +6,6 @@ import {
   Printer,
   Copy,
   Check,
-  Download,
   ExternalLink,
   Mail,
   Phone,
@@ -33,8 +33,6 @@ interface ResumeModalProps {
   onClose: () => void;
 }
 
-type AnyRecord = Record<string, any>;
-
 const PORTFOLIO_URL = 'https://abrehamamesa.netlify.app';
 
 const resumeStyles = `
@@ -54,13 +52,14 @@ const resumeStyles = `
     background: rgba(15, 23, 42, 0.76);
     backdrop-filter: blur(5px);
     overflow-y: auto;
+    font-family: Arial, Helvetica, sans-serif;
   }
 
   .resume-modal-shell {
-    width: min(100%, 1080px);
-    max-height: calc(100vh - 40px);
     display: flex;
     flex-direction: column;
+    width: min(100%, 1080px);
+    max-height: calc(100vh - 40px);
     overflow: hidden;
     border-radius: 16px;
     background: #f1f5f9;
@@ -158,11 +157,11 @@ const resumeStyles = `
     box-shadow: 0 5px 30px rgba(15, 23, 42, 0.1);
     font-family: Arial, Helvetica, sans-serif;
     font-size: 10pt;
-    line-height: 1.48;
+    line-height: 1.45;
   }
 
   .resume-header {
-    padding-bottom: 20px;
+    padding-bottom: 18px;
     border-bottom: 3px solid #ea580c;
   }
 
@@ -226,8 +225,8 @@ const resumeStyles = `
   }
 
   .resume-avatar {
-    width: 112px;
-    height: 112px;
+    width: 108px;
+    height: 108px;
     flex-shrink: 0;
     object-fit: cover;
     object-position: center;
@@ -237,20 +236,20 @@ const resumeStyles = `
   }
 
   .resume-section {
-    margin-top: 20px;
+    margin-top: 19px;
   }
 
   .resume-section-heading {
     display: flex;
     align-items: center;
     gap: 8px;
-    margin: 0 0 10px;
+    margin: 0 0 9px;
     padding-bottom: 6px;
     border-bottom: 1px solid #e2e8f0;
     color: #111827;
     font-size: 11pt;
     font-weight: 800;
-    letter-spacing: 0.55px;
+    letter-spacing: 0.5px;
     text-transform: uppercase;
   }
 
@@ -285,7 +284,7 @@ const resumeStyles = `
   }
 
   .resume-entry {
-    margin-bottom: 13px;
+    margin-bottom: 12px;
     break-inside: avoid;
     page-break-inside: avoid;
   }
@@ -344,11 +343,12 @@ const resumeStyles = `
   .resume-project-grid {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 10px;
+    gap: 9px;
   }
 
   .resume-project-card {
-    padding: 10px;
+    min-width: 0;
+    padding: 9px;
     border: 1px solid #e5e7eb;
     border-radius: 7px;
     break-inside: avoid;
@@ -369,7 +369,7 @@ const resumeStyles = `
   }
 
   .resume-project-tech {
-    margin-top: 6px;
+    margin: 6px 0 0;
     color: #c2410c;
     font-size: 8pt;
     font-weight: 700;
@@ -387,7 +387,7 @@ const resumeStyles = `
     align-items: center;
     justify-content: space-between;
     gap: 12px;
-    margin-top: 24px;
+    margin-top: 20px;
     padding-top: 9px;
     border-top: 1px solid #e5e7eb;
     color: #94a3b8;
@@ -399,8 +399,8 @@ const resumeStyles = `
     align-items: center;
     justify-content: space-between;
     gap: 20px;
-    margin-top: 18px;
-    padding: 12px 0 0;
+    margin-top: 16px;
+    padding-top: 10px;
     border-top: 2px solid #ea580c;
     break-inside: avoid;
     page-break-inside: avoid;
@@ -439,7 +439,7 @@ const resumeStyles = `
     flex-shrink: 0;
     align-items: center;
     justify-content: center;
-    padding: 6px;
+    padding: 5px;
     border: 1px solid #e5e7eb;
     border-radius: 8px;
     background: #fff;
@@ -447,8 +447,8 @@ const resumeStyles = `
 
   .resume-qr-code svg {
     display: block;
-    width: 88px;
-    height: 88px;
+    width: 80px;
+    height: 80px;
   }
 
   .resume-empty {
@@ -529,17 +529,25 @@ const resumeStyles = `
   @media print {
     html,
     body {
-      width: 100% !important;
+      display: block !important;
+      width: auto !important;
       height: auto !important;
+      min-height: 0 !important;
       margin: 0 !important;
       padding: 0 !important;
+      overflow: visible !important;
       background: #fff !important;
       -webkit-print-color-adjust: exact !important;
       print-color-adjust: exact !important;
     }
 
-    body * {
-      visibility: hidden !important;
+    /*
+     * The modal is rendered directly under body using createPortal.
+     * Remove the application root and other body children from the
+     * print layout instead of merely hiding their visibility.
+     */
+    body > *:not(.resume-modal-overlay):not(style) {
+      display: none !important;
     }
 
     .resume-modal-overlay,
@@ -551,7 +559,7 @@ const resumeStyles = `
       position: static !important;
       inset: auto !important;
       display: block !important;
-      width: 100% !important;
+      width: auto !important;
       height: auto !important;
       min-height: 0 !important;
       margin: 0 !important;
@@ -565,7 +573,9 @@ const resumeStyles = `
       display: block !important;
       width: 100% !important;
       max-width: none !important;
+      height: auto !important;
       max-height: none !important;
+      min-height: 0 !important;
       margin: 0 !important;
       padding: 0 !important;
       overflow: visible !important;
@@ -581,9 +591,11 @@ const resumeStyles = `
 
     .resume-modal-scroll {
       display: block !important;
+      flex: none !important;
       width: 100% !important;
       height: auto !important;
       min-height: 0 !important;
+      max-height: none !important;
       margin: 0 !important;
       padding: 0 !important;
       overflow: visible !important;
@@ -594,13 +606,16 @@ const resumeStyles = `
       display: block !important;
       width: 100% !important;
       max-width: none !important;
+      height: auto !important;
       min-height: 0 !important;
       margin: 0 !important;
       padding: 0 !important;
       overflow: visible !important;
       background: #fff !important;
       box-shadow: none !important;
+      color: #1f2937 !important;
       font-size: 9pt !important;
+      line-height: 1.35 !important;
     }
 
     #resume-print-root .resume-name {
@@ -614,12 +629,20 @@ const resumeStyles = `
       -webkit-print-color-adjust: exact !important;
     }
 
+    #resume-print-root .resume-header {
+      padding-bottom: 12px !important;
+    }
+
     #resume-print-root .resume-section {
-      margin-top: 14px !important;
+      margin-top: 13px !important;
+    }
+
+    #resume-print-root .resume-section-heading {
+      margin-bottom: 7px !important;
     }
 
     #resume-print-root .resume-entry {
-      margin-bottom: 9px !important;
+      margin-bottom: 8px !important;
       break-inside: avoid !important;
       page-break-inside: avoid !important;
     }
@@ -630,11 +653,13 @@ const resumeStyles = `
 
     #resume-print-root .resume-project-card {
       padding: 7px !important;
+      break-inside: avoid !important;
+      page-break-inside: avoid !important;
     }
 
     #resume-print-root .resume-qr-section {
-      margin-top: 14px !important;
-      padding-top: 9px !important;
+      margin-top: 12px !important;
+      padding-top: 8px !important;
       break-inside: avoid !important;
       page-break-inside: avoid !important;
     }
@@ -644,8 +669,8 @@ const resumeStyles = `
     }
 
     #resume-print-root .resume-qr-code svg {
-      width: 76px !important;
-      height: 76px !important;
+      width: 72px !important;
+      height: 72px !important;
     }
 
     #resume-print-root a {
@@ -664,181 +689,71 @@ const resumeStyles = `
       break-after: avoid !important;
       page-break-after: avoid !important;
     }
+
+    #resume-print-root img,
+    #resume-print-root svg {
+      break-inside: avoid !important;
+      page-break-inside: avoid !important;
+    }
   }
 `;
 
-const getText = (
-  object: AnyRecord | undefined | null,
-  keys: string[],
-  fallback = '',
-): string => {
-  if (!object) return fallback;
-
-  for (const key of keys) {
-    const value = object[key];
-
-    if (typeof value === 'string' && value.trim()) {
-      return value.trim();
-    }
-
-    if (typeof value === 'number') {
-      return String(value);
-    }
-  }
-
-  return fallback;
-};
-
-const getArray = (value: unknown): AnyRecord[] =>
-  Array.isArray(value) ? value.filter(Boolean) : [];
-
-const getDescription = (item: AnyRecord): string =>
-  getText(item, [
-    'description',
-    'summary',
-    'details',
-    'overview',
-    'objective',
-    'about',
-    'content',
-  ]);
-
-const getDateRange = (item: AnyRecord): string => {
-  const start = getText(item, [
-    'startDate',
-    'start',
-    'from',
-    'dateFrom',
-    'periodStart',
-  ]);
-
-  const end = getText(item, [
-    'endDate',
-    'end',
-    'to',
-    'dateTo',
-    'periodEnd',
-  ]);
-
-  const direct = getText(item, [
-    'dateRange',
-    'duration',
-    'period',
-    'dates',
-  ]);
-
-  if (direct) return direct;
-  if (start && end) return `${start} – ${end}`;
-  if (start) return `${start} – Present`;
-  return end;
-};
-
-const getList = (value: unknown): string[] => {
-  if (Array.isArray(value)) {
-    return value
-      .map((item) => {
-        if (typeof item === 'string') return item;
-        if (item && typeof item === 'object') {
-          return getText(item as AnyRecord, [
-            'description',
-            'text',
-            'name',
-            'title',
-          ]);
-        }
-        return '';
-      })
-      .filter(Boolean);
-  }
-
-  if (typeof value === 'string' && value.trim()) {
-    return value
-      .split(/\n|•|;/)
-      .map((item) => item.trim())
-      .filter(Boolean);
-  }
-
-  return [];
-};
-
-const ResumeModal: React.FC<ResumeModalProps> = ({ isOpen, onClose }) => {
+const ResumeModal: React.FC<ResumeModalProps> = ({
+  isOpen,
+  onClose,
+}) => {
   const [copied, setCopied] = useState(false);
 
-  // Supports common context naming conventions without changing the context.
-  const experienceContext = useExperience() as AnyRecord;
+  const experienceContext = useExperience() as {
+    experiences?: any[];
+    publicExperiences?: any[];
+    viewMode?: string;
+  };
 
-  const experience = useMemo(
-    () =>
-      getArray(
-        experienceContext?.experience ??
-          experienceContext?.experiences ??
-          experienceContext?.workExperience ??
-          experienceContext?.workExperiences ??
-          experienceContext?.professionalExperience,
-      ),
-    [experienceContext],
-  );
+  const experiences = useMemo(() => {
+    const source =
+      experienceContext.publicExperiences ??
+      experienceContext.experiences ??
+      [];
 
-  const personal = PERSONAL_INFO as AnyRecord;
-  const projects = getArray(PROJECTS as unknown);
-  const certifications = getArray(CERTIFICATIONS as unknown);
-  const education = getArray(EDUCATION as unknown);
-
-  const name = getText(
-    personal,
-    ['name', 'fullName', 'full_name'],
-    'Your Name',
-  );
-
-  const role = getText(
-    personal,
-    ['currentRole', 'role', 'title', 'position', 'headline'],
-    'Software Developer',
-  );
-
-  const email = getText(personal, ['email', 'emailAddress']);
-  const phone = getText(personal, ['phone', 'phoneNumber', 'mobile']);
-  const secondaryPhone = getText(personal, [
-    'secondaryPhone',
-    'alternatePhone',
-    'phone2',
-  ]);
-  const location = getText(personal, ['location', 'address', 'city']);
-  const github = getText(personal, ['github', 'githubUrl', 'githubURL']);
-  const linkedin = getText(personal, [
-    'linkedin',
-    'linkedinUrl',
-    'linkedinURL',
+    return source
+      .filter((item) => item && item.isPublic !== false)
+      .slice()
+      .sort((a, b) => (a.order ?? 999) - (b.order ?? 999));
+  }, [
+    experienceContext.publicExperiences,
+    experienceContext.experiences,
   ]);
 
-  const summary = getText(personal, [
-    'professionalSummary',
-    'summary',
-    'bio',
-    'about',
-    'description',
-    'objective',
-  ]);
+  const personal = PERSONAL_INFO;
+  const projects = PROJECTS;
+  const certifications = CERTIFICATIONS;
 
-  const rawSkills =
-    personal.technicalSkills ??
-    personal.skills ??
-    personal.technologies ??
-    personal.techStack ??
-    [];
+  const skills = useMemo(() => {
+    const groupedSkills = personal.coreSkills;
 
-  const skills = getList(rawSkills);
+    return Object.values(groupedSkills)
+      .flat()
+      .filter((skill): skill is string => typeof skill === 'string');
+  }, []);
 
-  const buildResumeText = (): string => {
+  const education = EDUCATION;
+
+  const resumeSummary = personal.bio;
+
+  const resumeText = useMemo(() => {
     const lines: string[] = [
-      name,
-      role,
-      [email, phone, secondaryPhone, location, github, linkedin]
-        .filter(Boolean)
-        .join(' | '),
+      personal.name,
+      personal.title,
+      personal.email,
+      personal.phone1,
+      personal.phone2,
+      personal.location,
+      personal.linkedin,
+      PORTFOLIO_URL,
       '',
       'PROFESSIONAL SUMMARY',
-      summary || '',
+      resumeSummary,
       '',
       'TECHNICAL EXPERTISE',
       skills.join(', '),
@@ -846,72 +761,66 @@ const ResumeModal: React.FC<ResumeModalProps> = ({ isOpen, onClose }) => {
       'PROFESSIONAL EXPERIENCE',
     ];
 
-    experience.forEach((item) => {
+    experiences.forEach((item) => {
       lines.push(
-        getText(item, ['role', 'title', 'position', 'jobTitle', 'name']),
-        getText(item, [
-          'company',
-          'companyName',
-          'organization',
-          'employer',
-        ]),
-        getDateRange(item),
-        getDescription(item),
-        ...getList(
-          item.responsibilities ??
-            item.achievements ??
-            item.highlights ??
-            item.bulletPoints,
-        ),
+        item.title ?? '',
+        item.organization ?? '',
+        item.period ?? '',
+        item.location ?? '',
+        ...(item.achievements ?? []),
         '',
       );
     });
 
     lines.push('', 'SELECTED PROJECTS');
 
-    projects.forEach((item) => {
+    projects.forEach((project) => {
       lines.push(
-        getText(item, ['name', 'title', 'projectName']),
-        getDescription(item),
-        getText(item, ['technologies', 'techStack', 'stack']),
+        project.title,
+        project.subtitle,
+        project.role,
+        project.organization,
+        project.year,
+        project.summary,
+        `Technologies: ${project.techStack.join(', ')}`,
         '',
       );
     });
 
-    lines.push('', 'EDUCATION');
+    lines.push(
+      '',
+      'EDUCATION',
+      education.degree,
+      education.institution,
+      education.graduationYear,
+      `Exit Exam Score: ${education.exitExamScore}`,
+      ...education.keyActivities,
+      '',
+      'CERTIFICATIONS & HONORS',
+    );
 
-    education.forEach((item) => {
+    certifications.forEach((certification) => {
       lines.push(
-        getText(item, ['degree', 'title', 'qualification', 'program']),
-        getText(item, ['institution', 'school', 'university', 'organization']),
-        getDateRange(item),
-        getDescription(item),
+        certification.title,
+        certification.issuer,
+        certification.year,
+        certification.description,
         '',
       );
     });
 
-    lines.push('', 'CERTIFICATIONS & HONORS');
+    lines.push(`Portfolio: ${PORTFOLIO_URL}`);
 
-    certifications.forEach((item) => {
-      lines.push(
-        getText(item, ['name', 'title', 'certification', 'certificateName']),
-        getText(item, ['issuer', 'organization', 'provider']),
-        getDateRange(item),
-      );
-    });
-
-    lines.push('', `Portfolio: ${PORTFOLIO_URL}`);
-
-    return lines.filter((line) => line !== undefined).join('\n');
-  };
+    return lines.join('\n');
+  }, [experiences, projects, certifications, skills, resumeSummary]);
 
   const handleCopy = async () => {
     try {
-      await navigator.clipboard.writeText(buildResumeText());
+      await navigator.clipboard.writeText(resumeText);
       setCopied(true);
       window.setTimeout(() => setCopied(false), 2000);
     } catch (error) {
-      console.error('Unable to copy résumé text:', error);
+      console.error('Unable to copy résumé:', error);
     }
   };
 
@@ -919,7 +828,9 @@ const ResumeModal: React.FC<ResumeModalProps> = ({ isOpen, onClose }) => {
     window.print();
   };
 
-  if (!isOpen || typeof document === 'undefined') return null;
+  if (!isOpen || typeof document === 'undefined') {
+    return null;
+  }
 
   return createPortal(
     <>
@@ -931,7 +842,9 @@ const ResumeModal: React.FC<ResumeModalProps> = ({ isOpen, onClose }) => {
         aria-modal="true"
         aria-label="Résumé preview"
         onClick={(event) => {
-          if (event.target === event.currentTarget) onClose();
+          if (event.target === event.currentTarget) {
+            onClose();
+          }
         }}
       >
         <div className="resume-modal-shell">
@@ -939,7 +852,7 @@ const ResumeModal: React.FC<ResumeModalProps> = ({ isOpen, onClose }) => {
             <div>
               <p className="resume-toolbar-title">Résumé Preview</p>
               <p className="resume-toolbar-subtitle">
-                Review your CV before printing or saving as PDF.
+                Review your résumé before printing or saving as PDF.
               </p>
             </div>
 
@@ -969,7 +882,13 @@ const ResumeModal: React.FC<ResumeModalProps> = ({ isOpen, onClose }) => {
               <button
                 type="button"
                 className="resume-toolbar-button"
-                onClick={() => window.open(PORTFOLIO_URL, '_blank', 'noopener,noreferrer')}
+                onClick={() =>
+                  window.open(
+                    PORTFOLIO_URL,
+                    '_blank',
+                    'noopener,noreferrer',
+                  )
+                }
                 title="Open portfolio"
               >
                 <ExternalLink />
@@ -994,370 +913,228 @@ const ResumeModal: React.FC<ResumeModalProps> = ({ isOpen, onClose }) => {
               <header className="resume-header">
                 <div className="resume-header-content">
                   <div className="resume-profile-info">
-                    <h1 className="resume-name">{name}</h1>
-                    <p className="resume-role">{role}</p>
+                    <h1 className="resume-name">{personal.name}</h1>
+
+                    <p className="resume-role">{personal.title}</p>
 
                     <div className="resume-contact-list">
-                      {email && (
-                        <span className="resume-contact-item">
-                          <Mail />
-                          <a href={`mailto:${email}`}>{email}</a>
-                        </span>
-                      )}
+                      <span className="resume-contact-item">
+                        <Mail />
+                        <a href={`mailto:${personal.email}`}>
+                          {personal.email}
+                        </a>
+                      </span>
 
-                      {phone && (
-                        <span className="resume-contact-item">
-                          <Phone />
-                          <span>{phone}</span>
-                        </span>
-                      )}
+                      <span className="resume-contact-item">
+                        <Phone />
+                        <span>{personal.phone1}</span>
+                      </span>
 
-                      {secondaryPhone && secondaryPhone !== phone && (
-                        <span className="resume-contact-item">
-                          <Phone />
-                          <span>{secondaryPhone}</span>
-                        </span>
-                      )}
+                      <span className="resume-contact-item">
+                        <Phone />
+                        <span>{personal.phone2}</span>
+                      </span>
 
-                      {location && (
-                        <span className="resume-contact-item">
-                          <MapPin />
-                          <span>{location}</span>
-                        </span>
-                      )}
+                      <span className="resume-contact-item">
+                        <MapPin />
+                        <span>{personal.location}</span>
+                      </span>
 
-                      {github && (
-                        <span className="resume-contact-item">
-                          <Github />
-                          <a
-                            href={
-                              github.startsWith('http')
-                                ? github
-                                : `https://github.com/${github.replace(/^@/, '')}`
-                            }
-                          >
-                            GitHub
-                          </a>
-                        </span>
-                      )}
-
-                      {linkedin && (
-                        <span className="resume-contact-item">
-                          <Linkedin />
-                          <a
-                            href={
-                              linkedin.startsWith('http')
-                                ? linkedin
-                                : `https://www.linkedin.com/in/${linkedin.replace(/^@/, '')}`
-                            }
-                          >
-                            LinkedIn
-                          </a>
-                        </span>
-                      )}
+                      <span className="resume-contact-item">
+                        <Linkedin />
+                        <a href={personal.linkedin}>LinkedIn Profile</a>
+                      </span>
                     </div>
                   </div>
 
                   <img
                     src={avatarImage}
-                    alt={`${name} profile portrait`}
+                    alt={`${personal.name} profile portrait`}
                     className="resume-avatar"
                   />
                 </div>
               </header>
 
-              {/* PROFESSIONAL SUMMARY */}
-              {summary && (
-                <section className="resume-section">
-                  <h2 className="resume-section-heading">
-                    <BookOpen />
-                    Professional Summary
-                  </h2>
-                  <p className="resume-summary">{summary}</p>
-                </section>
-              )}
+              {/* SUMMARY */}
+              <section className="resume-section">
+                <h2 className="resume-section-heading">
+                  <BookOpen />
+                  Professional Summary
+                </h2>
 
-              {/* TECHNICAL EXPERTISE */}
-              {skills.length > 0 && (
-                <section className="resume-section">
-                  <h2 className="resume-section-heading">
-                    <Code2 />
-                    Technical Expertise
-                  </h2>
+                <p className="resume-summary">{personal.bio}</p>
+              </section>
 
-                  <div className="resume-skills-list">
-                    {skills.map((skill, index) => (
-                      <span className="resume-skill" key={`${skill}-${index}`}>
-                        {skill}
-                      </span>
-                    ))}
-                  </div>
-                </section>
-              )}
+              {/* SKILLS */}
+              <section className="resume-section">
+                <h2 className="resume-section-heading">
+                  <Code2 />
+                  Technical Expertise
+                </h2>
 
-              {/* PROFESSIONAL EXPERIENCE */}
+                <div className="resume-skills-list">
+                  {skills.map((skill) => (
+                    <span className="resume-skill" key={skill}>
+                      {skill}
+                    </span>
+                  ))}
+                </div>
+              </section>
+
+              {/* EXPERIENCE */}
               <section className="resume-section">
                 <h2 className="resume-section-heading">
                   <Briefcase />
                   Professional Experience
                 </h2>
 
-                {experience.length > 0 ? (
-                  experience.map((item, index) => {
-                    const title = getText(item, [
-                      'role',
-                      'title',
-                      'position',
-                      'jobTitle',
-                      'name',
-                    ]);
+                {experiences.length > 0 ? (
+                  experiences.map((item, index) => (
+                    <div
+                      className="resume-entry"
+                      key={item.id ?? `${item.title}-${index}`}
+                    >
+                      <div className="resume-entry-heading">
+                        <div>
+                          <h3 className="resume-entry-title">
+                            {item.title}
+                          </h3>
 
-                    const company = getText(item, [
-                      'company',
-                      'companyName',
-                      'organization',
-                      'employer',
-                    ]);
-
-                    const description = getDescription(item);
-
-                    const responsibilities = getList(
-                      item.responsibilities ??
-                        item.achievements ??
-                        item.highlights ??
-                        item.bulletPoints,
-                    );
-
-                    return (
-                      <div
-                        className="resume-entry"
-                        key={`${company}-${title}-${index}`}
-                      >
-                        <div className="resume-entry-heading">
-                          <div>
-                            <h3 className="resume-entry-title">
-                              {title || 'Professional Role'}
-                            </h3>
-                            {company && (
-                              <p className="resume-entry-subtitle">
-                                {company}
-                              </p>
-                            )}
-                          </div>
-
-                          {getDateRange(item) && (
-                            <span className="resume-entry-date">
-                              {getDateRange(item)}
-                            </span>
-                          )}
+                          <p className="resume-entry-subtitle">
+                            {item.organization}
+                          </p>
                         </div>
 
-                        {description && (
-                          <p className="resume-entry-description">
-                            {description}
-                          </p>
-                        )}
-
-                        {responsibilities.length > 0 && (
-                          <ul className="resume-entry-list">
-                            {responsibilities.map((responsibility, i) => (
-                              <li key={`${responsibility}-${i}`}>
-                                {responsibility}
-                              </li>
-                            ))}
-                          </ul>
-                        )}
+                        <span className="resume-entry-date">
+                          {item.period}
+                        </span>
                       </div>
-                    );
-                  })
+
+                      {item.location && (
+                        <p className="resume-entry-description">
+                          {item.location}
+                        </p>
+                      )}
+
+                      {item.achievements?.length > 0 && (
+                        <ul className="resume-entry-list">
+                          {item.achievements.map(
+                            (achievement: string, achievementIndex: number) => (
+                              <li
+                                key={`${item.id}-${achievementIndex}`}
+                              >
+                                {achievement}
+                              </li>
+                            ),
+                          )}
+                        </ul>
+                      )}
+                    </div>
+                  ))
                 ) : (
                   <p className="resume-empty">
-                    Add your work experience to the ExperienceContext data.
+                    No public work experience is currently available.
                   </p>
                 )}
               </section>
 
-              {/* SELECTED PROJECTS */}
-              {projects.length > 0 && (
-                <section className="resume-section">
-                  <h2 className="resume-section-heading">
-                    <Code2 />
-                    Selected Projects
-                  </h2>
+              {/* PROJECTS */}
+              <section className="resume-section">
+                <h2 className="resume-section-heading">
+                  <Code2 />
+                  Selected Projects
+                </h2>
 
-                  <div className="resume-project-grid">
-                    {projects.map((item, index) => {
-                      const title = getText(item, [
-                        'name',
-                        'title',
-                        'projectName',
-                      ]);
+                <div className="resume-project-grid">
+                  {projects.map((project) => (
+                    <div className="resume-project-card" key={project.id}>
+                      <h3 className="resume-project-title">
+                        {project.title}
+                      </h3>
 
-                      const description = getDescription(item);
+                      <p className="resume-project-description">
+                        {project.summary}
+                      </p>
 
-                      const technologies = getList(
-                        item.technologies ??
-                          item.techStack ??
-                          item.stack ??
-                          item.technologiesUsed,
-                      );
-
-                      const directTechnologies = getText(item, [
-                        'technologies',
-                        'techStack',
-                        'stack',
-                      ]);
-
-                      return (
-                        <div
-                          className="resume-project-card"
-                          key={`${title}-${index}`}
-                        >
-                          <h3 className="resume-project-title">
-                            {title || `Project ${index + 1}`}
-                          </h3>
-
-                          {description && (
-                            <p className="resume-project-description">
-                              {description}
-                            </p>
-                          )}
-
-                          {(technologies.length > 0 || directTechnologies) && (
-                            <p className="resume-project-tech">
-                              {technologies.length > 0
-                                ? technologies.join(' · ')
-                                : directTechnologies}
-                            </p>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-                </section>
-              )}
+                      <p className="resume-project-tech">
+                        {project.techStack.join(' · ')}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </section>
 
               {/* EDUCATION */}
-              {education.length > 0 && (
-                <section className="resume-section">
-                  <h2 className="resume-section-heading">
-                    <BookOpen />
-                    Education
-                  </h2>
+              <section className="resume-section">
+                <h2 className="resume-section-heading">
+                  <BookOpen />
+                  Education
+                </h2>
 
-                  {education.map((item, index) => {
-                    const degree = getText(item, [
-                      'degree',
-                      'title',
-                      'qualification',
-                      'program',
-                    ]);
+                <div className="resume-entry">
+                  <div className="resume-education-layout">
+                    <div>
+                      <h3 className="resume-entry-title">
+                        {education.degree}
+                      </h3>
 
-                    const institution = getText(item, [
-                      'institution',
-                      'school',
-                      'university',
-                      'organization',
-                    ]);
+                      <p className="resume-entry-subtitle">
+                        {education.institution}
+                      </p>
+                    </div>
 
-                    const description = getDescription(item);
+                    <span className="resume-entry-date">
+                      {education.graduationYear}
+                    </span>
+                  </div>
 
-                    return (
-                      <div
-                        className="resume-entry"
-                        key={`${institution}-${degree}-${index}`}
-                      >
-                        <div className="resume-education-layout">
-                          <div>
-                            <h3 className="resume-entry-title">
-                              {degree || 'Education'}
-                            </h3>
-                            {institution && (
-                              <p className="resume-entry-subtitle">
-                                {institution}
-                              </p>
-                            )}
-                          </div>
+                  <p className="resume-entry-description">
+                    Exit Exam Score: {education.exitExamScore}
+                  </p>
 
-                          {getDateRange(item) && (
-                            <span className="resume-entry-date">
-                              {getDateRange(item)}
-                            </span>
-                          )}
-                        </div>
-
-                        {description && (
-                          <p className="resume-entry-description">
-                            {description}
-                          </p>
-                        )}
-                      </div>
-                    );
-                  })}
-                </section>
-              )}
+                  <ul className="resume-entry-list">
+                    {education.keyActivities.map((activity, index) => (
+                      <li key={index}>{activity}</li>
+                    ))}
+                  </ul>
+                </div>
+              </section>
 
               {/* CERTIFICATIONS */}
-              {certifications.length > 0 && (
-                <section className="resume-section">
-                  <h2 className="resume-section-heading">
-                    <Award />
-                    Certifications &amp; Honors
-                  </h2>
+              <section className="resume-section">
+                <h2 className="resume-section-heading">
+                  <Award />
+                  Certifications &amp; Honors
+                </h2>
 
-                  {certifications.map((item, index) => {
-                    const title = getText(item, [
-                      'name',
-                      'title',
-                      'certification',
-                      'certificateName',
-                    ]);
+                {certifications.map((certification) => (
+                  <div className="resume-entry" key={certification.id}>
+                    <div className="resume-entry-heading">
+                      <div>
+                        <h3 className="resume-entry-title">
+                          {certification.title}
+                        </h3>
 
-                    const issuer = getText(item, [
-                      'issuer',
-                      'organization',
-                      'provider',
-                      'institution',
-                    ]);
-
-                    return (
-                      <div
-                        className="resume-entry"
-                        key={`${title}-${index}`}
-                      >
-                        <div className="resume-entry-heading">
-                          <div>
-                            <h3 className="resume-entry-title">
-                              {title || 'Certification'}
-                            </h3>
-                            {issuer && (
-                              <p className="resume-entry-subtitle">
-                                {issuer}
-                              </p>
-                            )}
-                          </div>
-
-                          {getDateRange(item) && (
-                            <span className="resume-entry-date">
-                              {getDateRange(item)}
-                            </span>
-                          )}
-                        </div>
-
-                        {getDescription(item) && (
-                          <p className="resume-entry-description">
-                            {getDescription(item)}
-                          </p>
-                        )}
+                        <p className="resume-entry-subtitle">
+                          {certification.issuer}
+                        </p>
                       </div>
-                    );
-                  })}
-                </section>
-              )}
+
+                      <span className="resume-entry-date">
+                        {certification.year}
+                      </span>
+                    </div>
+
+                    <p className="resume-entry-description">
+                      {certification.description}
+                    </p>
+                  </div>
+                ))}
+              </section>
 
               {/* FOOTER */}
               <footer className="resume-footer">
-                <span>{name}</span>
+                <span>{personal.name}</span>
                 <span>Curriculum Vitae</span>
               </footer>
 
@@ -1389,7 +1166,7 @@ const ResumeModal: React.FC<ResumeModalProps> = ({ isOpen, onClose }) => {
                 <div className="resume-qr-code">
                   <QRCodeSVG
                     value={PORTFOLIO_URL}
-                    size={88}
+                    size={80}
                     level="H"
                     bgColor="#ffffff"
                     fgColor="#111827"

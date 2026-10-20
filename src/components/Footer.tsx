@@ -45,13 +45,13 @@ export const Footer: React.FC<FooterProps> = ({ onOpenResume, onOpenAdminLogin, 
             <a href="#contact" className="hover:text-white transition-colors">Contact</a>
             
             {/* Direct Admin Panel Path Link */}
-            <button
+            {/* <button
               onClick={isAdmin ? onNavigateAdmin : onOpenAdminLogin}
               className="text-orange-400 hover:text-orange-300 font-semibold transition-colors cursor-pointer flex items-center gap-1"
             >
               <Lock className="w-3 h-3" />
               <span>Admin Panel (/admin)</span>
-            </button>
+            </button> */}
           </div>
 
           {/* Social Icons & Back to top */}
@@ -114,13 +114,8 @@ export const Footer: React.FC<FooterProps> = ({ onOpenResume, onOpenAdminLogin, 
                 </button>
               </div>
             ) : (
-              <button
-                onClick={onOpenAdminLogin}
-                className="inline-flex items-center gap-1 text-zinc-500 hover:text-orange-400 transition-colors cursor-pointer"
-                title="Admin Login (Add/Manage Experiences)"
-              >
-                <Lock className="w-3 h-3" />
-                <span>Admin Login (/admin)</span>
+              <button>
+      
               </button>
             )}
           </div>
