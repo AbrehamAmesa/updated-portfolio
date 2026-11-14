@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import {
   ArrowRight,
@@ -8,6 +9,7 @@ import {
   Linkedin,
   Mail,
   Phone,
+  Languages,
 } from 'lucide-react';
 import { PERSONAL_INFO } from '../data/portfolioData';
 
@@ -42,8 +44,10 @@ export const Hero: React.FC<HeroProps> = ({ onOpenResume }) => {
 
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 items-center gap-12 lg:grid-cols-12 lg:gap-8">
+
           {/* Left column */}
           <div className="space-y-6 lg:col-span-7">
+
             <div className="flex flex-wrap items-center gap-2 text-xs font-medium text-orange-400 sm:text-sm">
               <span className="inline-block h-2 w-2 animate-pulse rounded-full bg-orange-500" />
               <span>Software Developer</span>
@@ -135,11 +139,40 @@ export const Hero: React.FC<HeroProps> = ({ onOpenResume }) => {
                 </div>
               ))}
             </div>
+
+            {/* Languages */}
+            <div className="border-t border-zinc-800 pt-5">
+              <div className="mb-3 flex items-center gap-2">
+                <Languages className="h-4 w-4 text-orange-400" />
+                <h3 className="text-xs font-bold uppercase tracking-widest text-zinc-400">
+                  Languages
+                </h3>
+              </div>
+
+              <div className="flex flex-wrap gap-2">
+                {PERSONAL_INFO.languages.map((language) => (
+                  <div
+                    key={language.name}
+                    className="inline-flex items-center gap-2 rounded-lg border border-zinc-800 bg-[#161920] px-3 py-2 transition-colors hover:border-orange-500/40"
+                  >
+                    <span className="text-sm font-semibold text-zinc-200">
+                      {language.name}
+                    </span>
+                    <span className="h-1 w-1 rounded-full bg-orange-500" />
+                    <span className="text-xs text-zinc-400">
+                      {language.proficiency}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
           </div>
 
           {/* Right column: portrait and credentials */}
           <div className="flex justify-center lg:col-span-5 lg:justify-end">
             <div className="relative w-full max-w-sm rounded-2xl border border-zinc-800 bg-[#161920] p-4 shadow-2xl">
+
               {/* Portrait */}
               <div className="relative aspect-square w-full overflow-hidden rounded-xl bg-zinc-900">
                 {!avatarFailed && PERSONAL_INFO.avatarImage ? (
@@ -149,7 +182,7 @@ export const Hero: React.FC<HeroProps> = ({ onOpenResume }) => {
                     loading="eager"
                     fetchPriority="high"
                     className="h-full w-full object-cover object-center transition-transform duration-500 hover:scale-105"
-                    onError={(event) => {
+                    onError={() => {
                       console.error(
                         'Avatar failed to load:',
                         PERSONAL_INFO.avatarImage
@@ -194,6 +227,7 @@ export const Hero: React.FC<HeroProps> = ({ onOpenResume }) => {
 
               {/* Credentials */}
               <div className="mt-4 space-y-2.5 border-t border-zinc-800 pt-3">
+
                 <div className="flex items-center justify-between gap-3 text-xs">
                   <span className="text-zinc-400">Current Role</span>
                   <span className="text-right font-medium text-zinc-200">
@@ -275,9 +309,11 @@ export const Hero: React.FC<HeroProps> = ({ onOpenResume }) => {
                     Send Message →
                   </a>
                 </div>
+
               </div>
             </div>
           </div>
+
         </div>
       </div>
     </section>
