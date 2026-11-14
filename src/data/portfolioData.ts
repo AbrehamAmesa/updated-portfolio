@@ -80,6 +80,20 @@ export const PERSONAL_INFO = {
   title: 'Full Stack Software Engineer & Systems Designer',
   currentRole: 'Associate Application Development Officer at Siinqee Bank S.C.',
   location: 'Addis Ababa',
+    languages: [
+    {
+      name: 'Afaan Oromoo',
+      proficiency: 'Native',
+    },
+    {
+      name: 'Amharic',
+      proficiency: 'Fluent',
+    },
+    {
+      name: 'English',
+      proficiency: 'Professional',
+    },
+  ],
   email: 'abrehamamesw@gmail.com',
   phone1: '+251-973-705-847',
   phone2: '+251-710-794-385',
